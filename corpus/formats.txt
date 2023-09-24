@@ -1,4 +1,40 @@
 ====================
+css_in_js
+====================
+
+`
+${foo}
+`
+
+
+---
+
+(stylesheet
+  (css_in_js
+    (js_interpolation)))
+
+====================
+css_in_js multiple
+====================
+
+`
+${foo}
+`
+
+`
+${foo}
+`
+
+
+---
+
+(stylesheet
+  (css_in_js
+    (js_interpolation))
+      (css_in_js
+          (js_interpolation)))
+
+====================
 identifier
 ====================
 

@@ -163,24 +163,13 @@ using the color specified by that value."
 
 (defvar css-in-js-mode--indent-rules
   `((css-in-js
-     ;; special case for first line in stylesheet; see
-     ;; `css-in-js-mode--simple-indent'
-     ((and (parent-is "stylesheet")
-	   (node-is "stylesheet"))
-      prev-line ,(if (numberp css-in-js-mode-leading-indentation)
-                    (or css-in-js-mode-leading-indentation 0)
-                  css-indent-offset))
-     ;; special case for direct children of the stylesheet
-     ((parent-is "stylesheet")
-      parent-bol 0)
-     ;; special case - nodes in some multi-line expressions are occasionally nil
-     ;; (something wrong with the grammar maybe?)
-     (no-node
-      parent-bol css-indent-offset)
-     ;; closing
      ((or (node-is ")")
-	  (node-is "}"))
+          (node-is "}")
+          (node-is "`"))
       parent-bol 0)
+     ;; children in css_in_js block
+     ((parent-is "css_in_js")
+      parent-bol css-indent-offset)
      ;; children in a block
      ((parent-is "block")
       parent-bol css-indent-offset)
@@ -222,8 +211,8 @@ treesit node itself."
       (seq-map
        (lambda (el)
          (cons
-          (+ (treesit-node-start (cdr el)) 1)
-          (- (treesit-node-end (cdr el)) 1)))
+          (treesit-node-start (cdr el))
+          (treesit-node-end (cdr el))))
        (seq-filter
         (lambda (el)
           (let* ((node (cdr el))
@@ -261,35 +250,6 @@ Returns a cons cell (start . end) of buffer locations."
      ;; ranges by definition are sorted and non-overlapping
      (< (point) (cdr el)))
    (treesit-parser-included-ranges (treesit-parser-create 'css-in-js))))
-
-(defun css-in-js-mode--simple-indent (node parent bol)
-  "Treesit indent function to handle some css-in-js edge cases.
-Calls `treesit-simple-indent' with (possibly modified values of) NODE, PARENT,
-and BOL."
-  (if (eq (treesit-language-at (point)) 'css-in-js)
-      (let ((treesit-simple-indent-rules css-in-js-mode--indent-rules))
-        (css-in-js-mode--simple-indent-1 node parent bol))
-    (let ((treesit-simple-indent-rules (typescript-ts-mode--indent-rules 'tsx)))
-      (treesit-simple-indent node parent bol))))
-
-(defun css-in-js-mode--simple-indent-1 (node parent bol)
-  "Treesit indent function to handle some css-in-js edge cases.
-Calls `treesit-simple-indent' with (possibly modified values of) NODE, PARENT,
-and BOL."
-  (cond
-   ;; point is on the same line as JS/TS outside the css-in-js range
-   ((null node)
-    nil)
-   ;; `treesit-simple-indent' won't indent if parent is nil
-   ((and node
-	 (string-match-p (treesit-node-type node) "stylesheet")
-	 (null parent)
-	 (save-excursion
-	   (back-to-indentation)
-	   (not (looking-at-p "`"))))
-    (treesit-simple-indent node node bol))
-   ;; everything else
-   (t (treesit-simple-indent node parent bol))))
 
 (defun css-in-js-mode--complete-property ()
   "`css--complete-property' modified for CSS-in-JS."
@@ -406,10 +366,6 @@ point (if any)."
         (seq-mapn
          #'append
          treesit-font-lock-feature-list css-in-js-mode--font-lock-feature-list))
-       ;; configure indentation
-       (setq-local
-        treesit-indent-function
-        #'css-in-js-mode--simple-indent)
        ;; configure capf
        (add-hook
         'completion-at-point-functions
@@ -430,10 +386,6 @@ point (if any)."
       (seq-mapn
        #'seq-difference
        treesit-font-lock-feature-list css-in-js-mode--font-lock-feature-list))
-     ;; unconfigure indentation
-     (setq-local
-      treesit-indent-function
-      #'treesit-simple-indent)
      ;; unconfigure capf
      (remove-hook
       'completion-at-point-functions

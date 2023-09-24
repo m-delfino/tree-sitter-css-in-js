@@ -12,6 +12,15 @@ module.exports = grammar(require('./tree-sitter-css/grammar'), {
   rules: {
     /* new rules specific to CSS-in-JS */
 
+    stylesheet: $ => repeat(choice($._top_level_item, $.css_in_js)),
+
+    css_in_js: $ => seq(
+      '`',
+      repeat($._block_item),
+      optional(alias($.last_declaration, $.declaration)),
+      '`'
+    ),
+
     _js_identifier: $ => /[$_a-zA-Z0-9]+/,
 
     _js_string: $ => token(choice(
