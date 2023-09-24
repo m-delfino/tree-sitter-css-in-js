@@ -14,10 +14,12 @@
   :prefix "css-in-js-mode-")
 
 
-(defconst css-in-js--treesit-library--archives
+(defcustom css-in-js--treesit-library--archives
   "https://github.com/orzechowskid/tree-sitter-css-in-js/releases/download/latest/"
-  "Location of archives containing tree-sitter CSS-in-JS shared libraries.")
-
+  "Location of archives containing tree-sitter CSS-in-JS shared libraries."
+  :type 'string
+  :group 'css-in-js-mode
+  :package-version '(css-in-js-mode "1.0"))
 
 (defcustom css-in-js-mode-force-highlighting t
   "Enable/disable always-on CSS-in-JS syntax highlighting.
