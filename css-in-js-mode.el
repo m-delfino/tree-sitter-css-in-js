@@ -349,6 +349,9 @@ point (if any)."
          treesit-range-settings
          (treesit-range-rules
           'css-in-js-mode--treesit-set-ranges)))
+       (setq-local treesit-simple-indent-rules
+                   (append treesit-simple-indent-rules
+                           css-in-js-mode--indent-rules))
        ;; configure font-lock
        (if css-in-js-mode-force-highlighting
            (setq-local
